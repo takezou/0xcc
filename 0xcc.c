@@ -25,6 +25,23 @@ struct Token {
 // token currently looked at
 Token *token;
 
+// input
+char *user_input;
+
+// report error and its location
+void error_at(char *loc, char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+
+  int pos = loc - user_input;
+  fprintf(stderr, "%s\n", user_input);
+  fprintf(stderr, "%*s", pos, " "); // print space with pos length
+  fprintf(stderr, "^ ");
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  exit(1);
+}
+
 // function for error reporting
 // takes same arguments as printf
 void error(char *fmt, ...) {
@@ -34,6 +51,7 @@ void error(char *fmt, ...) {
   fprintf(stderr, "\n");
   exit(1);
 }
+
 bool consume(char op) {
   if(token->kind != TK_RESERVED || token->str[0] != op) {
     return false;
@@ -42,12 +60,11 @@ bool consume(char op) {
   return true;
 }
 
-
 // if next token is an expected one, read 1 more token ahead and return true
 // report error otherwise
 void expect(char op) {
   if (token->kind != TK_RESERVED || token->str[0] != op) {
-    error("missing '%c' here", op);
+    error_at(token->str, "missing '%c' here", op);
   }
   token = token->next;
 }
@@ -56,7 +73,7 @@ void expect(char op) {
 // report an error otherwise
 int expect_number() {
   if (token->kind != TK_NUM) {
-    error("missing a number here");
+    error_at(token->str, "missing a number here");
   }
   int val = token->val;
   token = token->next;
@@ -77,7 +94,8 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
 }
 
 // tokenize input string p and return it
-Token *tokenize(char *p) {
+Token *nnntokenize() {
+  char *p = user_input;
   Token head;
   head.next = NULL;
   Token *cur = &head;
@@ -99,7 +117,7 @@ Token *tokenize(char *p) {
       cur->val = strtol(p, &p, 10);
       continue;
     }
-    error("cannot tokenize");
+    error_at(p, "cannot tokenize");
   }
 
   new_token(TK_EOF, cur, p);
@@ -112,8 +130,10 @@ int main (int argc, char **argv) {
     return 1;
   }
 
+  user_input = argv[1];
+
   // tokenize input data
-  token = tokenize(argv[1]);
+  token = tokenize();
 
   // print first half of assembly code
   printf(".intel_syntax noprefix\n");
