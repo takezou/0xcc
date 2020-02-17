@@ -5,11 +5,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Tokey kind
+// type of node in abstract syntax tree
 typedef enum {
-  TK_RESERVED, // symbol token
-  TK_NUM, // integer token
-  TK_EOF // token to designate end of input
+  NODE_ADDITION, // +
+  NODE_SUBTRACTION, // -
+  NODE_MULTIPLICATION, // *
+  NODE_DIVISION, // /
+  NODE_NUMBER, // number
+} NodeKind;
+
+typedef struct Node Node;
+
+// abstract syntax tree node type
+struct Node {
+  NodeKind kind; // node type
+  Node *lhs; // left hand side
+  Node *rhs; // right hand side
+  int val; // used only when kind is NODE_NUMBER
+};
+
+// Token kind
+typedef enum {
+  TOKEN_RESERVED, // symbol token
+  TOKEN_NUMBER, // integer token
+  TOKEN_EOF // token to designate end of input
 } TokenKind;
 
 typedef struct Token Token;
@@ -18,7 +37,7 @@ typedef struct Token Token;
 struct Token {
   TokenKind kind; // token type
   Token *next; // next input token
-  int val; // value if token kind is TK_NUM
+  int val; // value if token kind is TOKEN_NUMBER
   char *str; // token string
 };
 
@@ -28,6 +47,10 @@ Token *token;
 // input
 char *user_input;
 
+
+Node *primary();
+Node *mul();
+Node *expression();
 // report error and its location
 void error_at(char *loc, char *fmt, ...) {
   va_list ap;
@@ -53,7 +76,7 @@ void error(char *fmt, ...) {
 }
 
 bool consume(char op) {
-  if(token->kind != TK_RESERVED || token->str[0] != op) {
+  if(token->kind != TOKEN_RESERVED || token->str[0] != op) {
     return false;
   }
   token = token->next;
@@ -63,7 +86,7 @@ bool consume(char op) {
 // if next token is an expected one, read 1 more token ahead and return true
 // report error otherwise
 void expect(char op) {
-  if (token->kind != TK_RESERVED || token->str[0] != op) {
+  if (token->kind != TOKEN_RESERVED || token->str[0] != op) {
     error_at(token->str, "missing '%c' here", op);
   }
   token = token->next;
@@ -72,7 +95,7 @@ void expect(char op) {
 // if next token is a number, read one token and return the value
 // report an error otherwise
 int expect_number() {
-  if (token->kind != TK_NUM) {
+  if (token->kind != TOKEN_NUMBER) {
     error_at(token->str, "missing a number here");
   }
   int val = token->val;
@@ -81,7 +104,66 @@ int expect_number() {
 }
 
 bool at_eof() {
-  return token->kind == TK_EOF;
+  return token->kind == TOKEN_EOF;
+}
+
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = kind;
+  node->lhs = lhs;
+  node->rhs = rhs;
+  return node;
+}
+
+Node *new_node_num(int val) {
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = NODE_NUMBER;
+  node->val = val;
+  return node;
+}
+
+Node *primary() {
+  // if the next token is "(", it should be "(" expr ")"
+  if (consume('(')) {
+    Node *node = expression();
+    expect(')');
+    return node;
+  }
+
+  // it should be a number otherwise
+  return new_node_num(expect_number());
+}
+
+Node *mul() {
+  Node *node = primary();
+
+  while(true) {
+    if (consume('*')) {
+      node = new_node(NODE_MULTIPLICATION, node, primary());
+    }
+    else if (consume('/')) {
+      node = new_node(NODE_DIVISION, node, primary());
+    }
+    else {
+      return node;
+    }
+  }
+}
+
+Node *expression() {
+  Node *node = mul();
+
+  while (true) {
+    if (consume('+')) {
+      node = new_node(NODE_ADDITION, node, mul());
+    }
+    else if (consume('-')) {
+      node = new_node(NODE_SUBTRACTION, node, mul());
+    }
+    else {
+      return node;
+    }
+  }
 }
 
 //create a new token and append it to cur
@@ -94,7 +176,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
 }
 
 // tokenize input string p and return it
-Token *nnntokenize() {
+Token *tokenize() {
   char *p = user_input;
   Token head;
   head.next = NULL;
@@ -107,21 +189,55 @@ Token *nnntokenize() {
       continue;
     }
 
-    if(*p == '+' || *p == '-') {
-      cur = new_token(TK_RESERVED, cur, p++);
+    if(*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')') {
+      cur = new_token(TOKEN_RESERVED, cur, p++);
       continue;
     }
 
     if(isdigit(*p)) {
-      cur = new_token(TK_NUM, cur, p);
+      cur = new_token(TOKEN_NUMBER, cur, p);
       cur->val = strtol(p, &p, 10);
       continue;
     }
     error_at(p, "cannot tokenize");
   }
 
-  new_token(TK_EOF, cur, p);
+  new_token(TOKEN_EOF, cur, p);
   return head.next;
+}
+
+void generate(Node *node) {
+  if (node->kind == NODE_NUMBER) {
+    printf("  push %d\n", node->val);
+    return;
+  }
+
+  generate(node->lhs);
+  generate(node->rhs);
+
+  printf("  pop rdi\n");
+  printf("  pop rax\n");
+
+  switch (node->kind) {
+  case NODE_ADDITION:
+    printf("  add rax, rdi\n");
+    break;
+    
+  case NODE_SUBTRACTION:
+    printf("  sub rax, rdi\n");
+    break;
+    
+  case NODE_MULTIPLICATION:
+    printf("  imul rax, rdi\n");
+    break;
+    
+  case NODE_DIVISION:
+    printf("  cqo\n");
+    printf("  idiv rdi\n");
+    break;
+  }
+
+  printf("  push rax\n");
 }
 
 int main (int argc, char **argv) {
@@ -130,16 +246,20 @@ int main (int argc, char **argv) {
     return 1;
   }
 
+  // tokenize and parse input data
   user_input = argv[1];
-
-  // tokenize input data
   token = tokenize();
+  Node *node = expression();
 
   // print first half of assembly code
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
   printf("main:\n");
 
+  // traverse abstract syntax tree and generate code
+  generate(node);
+
+  /*
   // expression must start with a number, so check that and
   // print first mov instruction
   printf("  mov rax, %d\n", expect_number());
@@ -156,7 +276,12 @@ int main (int argc, char **argv) {
     printf("  sub rax, %d\n", expect_number());
   }
 
+  */
+  // resulting value of evaluating whole expression should be at the top of the stack
+  // pop the value to RAX and return the value from the main function
+  printf("  pop rax\n");
   printf("  ret\n");
+  
   
   return 0;
 }
