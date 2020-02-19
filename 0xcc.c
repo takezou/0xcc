@@ -49,8 +49,10 @@ char *user_input;
 
 
 Node *primary();
-Node *mul();
+Node *multiplication_or_division();
 Node *expression();
+Node *unary();
+
 // report error and its location
 void error_at(char *loc, char *fmt, ...) {
   va_list ap;
@@ -134,15 +136,15 @@ Node *primary() {
   return new_node_num(expect_number());
 }
 
-Node *mul() {
-  Node *node = primary();
+Node *multiplication_or_division() {
+  Node *node = unary();
 
   while(true) {
     if (consume('*')) {
-      node = new_node(NODE_MULTIPLICATION, node, primary());
+      node = new_node(NODE_MULTIPLICATION, node, unary());
     }
     else if (consume('/')) {
-      node = new_node(NODE_DIVISION, node, primary());
+      node = new_node(NODE_DIVISION, node, unary());
     }
     else {
       return node;
@@ -151,14 +153,14 @@ Node *mul() {
 }
 
 Node *expression() {
-  Node *node = mul();
+  Node *node = multiplication_or_division();
 
   while (true) {
     if (consume('+')) {
-      node = new_node(NODE_ADDITION, node, mul());
+      node = new_node(NODE_ADDITION, node, multiplication_or_division());
     }
     else if (consume('-')) {
-      node = new_node(NODE_SUBTRACTION, node, mul());
+      node = new_node(NODE_SUBTRACTION, node, multiplication_or_division());
     }
     else {
       return node;
@@ -166,6 +168,15 @@ Node *expression() {
   }
 }
 
+Node *unary() {
+  if (consume('+')) {
+    return primary();
+  }
+  if (consume('-')) {
+    return new_node(NODE_SUBTRACTION, new_node_num(0), primary());
+  }
+  return primary();
+}
 //create a new token and append it to cur
 Token *new_token(TokenKind kind, Token *cur, char *str) {
   Token *tok = calloc(1, sizeof(Token));

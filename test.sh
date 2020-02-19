@@ -11,7 +11,7 @@ try() {
     if [ "$actual" = "$expected" ]; then
 	echo "$input => $actual"
     else
-	echo "$input => $expected expected, but goot $actual"
+	echo "$input => $expected expected, but got $actual"
 	exit 1
     fi
 }
@@ -25,4 +25,7 @@ try 6 2+3+5-4
 try 17 2+3*5
 try 25 '(2+3)*5'
 
+try '1' '-1+2'
+try '5' '-10+15'
+try '15' '-100+2*50+15'
 echo OK
