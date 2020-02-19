@@ -270,29 +270,10 @@ int main (int argc, char **argv) {
   // traverse abstract syntax tree and generate code
   generate(node);
 
-  /*
-  // expression must start with a number, so check that and
-  // print first mov instruction
-  printf("  mov rax, %d\n", expect_number());
-
-  // consume `+ <number>` or `- <number>` inputs and
-  // print assembly instructions
-  while (!at_eof()) {
-    if (consume('+')) {
-      printf("  add rax, %d\n", expect_number());
-      continue;
-    }
-
-    expect('-');
-    printf("  sub rax, %d\n", expect_number());
-  }
-
-  */
   // resulting value of evaluating whole expression should be at the top of the stack
   // pop the value to RAX and return the value from the main function
   printf("  pop rax\n");
   printf("  ret\n");
-  
   
   return 0;
 }
