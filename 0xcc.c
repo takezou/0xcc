@@ -203,7 +203,7 @@ Token *tokenize() {
     }
 
     if(!memcmp("+", p, 1) || !memcmp("-", p, 1) || !memcmp("*", p, 1) || !memcmp("/", p, 1) || !memcmp("(", p, 1) || !memcmp(")", p, 1)) {
-      char *token_string = calloc(1, 2);
+      char *token_string = calloc(2, sizeof(char));
       strncpy(token_string, p++, 1);
       cur = new_token(TOKEN_RESERVED, cur, token_string);
       continue;
