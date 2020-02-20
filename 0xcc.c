@@ -21,7 +21,7 @@ struct Node {
   NodeKind kind; // node type
   Node *lhs; // left hand side
   Node *rhs; // right hand side
-  int val; // used only when kind is NODE_NUMBER
+  int value; // used only when kind is NODE_NUMBER
 };
 
 // Token kind
@@ -37,8 +37,9 @@ typedef struct Token Token;
 struct Token {
   TokenKind kind; // token type
   Token *next; // next input token
-  int val; // value if token kind is TOKEN_NUMBER
-  char *str; // token string
+  int value; // value if token kind is TOKEN_NUMBER
+  char *string; // token string
+  int length; // token length
 };
 
 // token currently looked at
@@ -77,8 +78,8 @@ void error(char *fmt, ...) {
   exit(1);
 }
 
-bool consume(char op) {
-  if(token->kind != TOKEN_RESERVED || token->str[0] != op) {
+bool consume(char *operator) {
+  if(token->kind != TOKEN_RESERVED || strlen(operator) != token->length || memcmp(token->string, operator, token->length)) {
     return false;
   }
   token = token->next;
@@ -87,9 +88,9 @@ bool consume(char op) {
 
 // if next token is an expected one, read 1 more token ahead and return true
 // report error otherwise
-void expect(char op) {
-  if (token->kind != TOKEN_RESERVED || token->str[0] != op) {
-    error_at(token->str, "missing '%c' here", op);
+void expect(char *operator) {
+  if (token->kind != TOKEN_RESERVED || strlen(operator) != token->length || memcmp(token->string, operator, token->length)) {
+    error_at(token->string, "missing '%s' here", operator);
   }
   token = token->next;
 }
@@ -98,11 +99,11 @@ void expect(char op) {
 // report an error otherwise
 int expect_number() {
   if (token->kind != TOKEN_NUMBER) {
-    error_at(token->str, "missing a number here");
+    error_at(token->string, "missing a number here");
   }
-  int val = token->val;
+  int value = token->value;
   token = token->next;
-  return val;
+  return value;
 }
 
 bool at_eof() {
@@ -117,18 +118,18 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   return node;
 }
 
-Node *new_node_num(int val) {
+Node *new_node_num(int value) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = NODE_NUMBER;
-  node->val = val;
+  node->value = value;
   return node;
 }
 
 Node *primary() {
   // if the next token is "(", it should be "(" expr ")"
-  if (consume('(')) {
+  if (consume("(")) {
     Node *node = expression();
-    expect(')');
+    expect(")");
     return node;
   }
 
@@ -140,10 +141,10 @@ Node *multiplication_or_division() {
   Node *node = unary();
 
   while(true) {
-    if (consume('*')) {
+    if (consume("*")) {
       node = new_node(NODE_MULTIPLICATION, node, unary());
     }
-    else if (consume('/')) {
+    else if (consume("/")) {
       node = new_node(NODE_DIVISION, node, unary());
     }
     else {
@@ -156,10 +157,10 @@ Node *expression() {
   Node *node = multiplication_or_division();
 
   while (true) {
-    if (consume('+')) {
+    if (consume("+")) {
       node = new_node(NODE_ADDITION, node, multiplication_or_division());
     }
-    else if (consume('-')) {
+    else if (consume("-")) {
       node = new_node(NODE_SUBTRACTION, node, multiplication_or_division());
     }
     else {
@@ -169,21 +170,22 @@ Node *expression() {
 }
 
 Node *unary() {
-  if (consume('+')) {
+  if (consume("+")) {
     return primary();
   }
-  if (consume('-')) {
+  if (consume("-")) {
     return new_node(NODE_SUBTRACTION, new_node_num(0), primary());
   }
   return primary();
 }
 //create a new token and append it to cur
-Token *new_token(TokenKind kind, Token *cur, char *str) {
-  Token *tok = calloc(1, sizeof(Token));
-  tok->kind = kind;
-  tok->str = str;
-  cur->next = tok;
-  return tok;
+Token *new_token(TokenKind kind, Token *cur, char *string) {
+  Token *token = calloc(1, sizeof(Token));
+  token->kind = kind;
+  token->string = string;
+  token->length = strlen(string);
+  cur->next = token;
+  return token;
 }
 
 // tokenize input string p and return it
@@ -200,14 +202,16 @@ Token *tokenize() {
       continue;
     }
 
-    if(*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')') {
-      cur = new_token(TOKEN_RESERVED, cur, p++);
+    if(!memcmp("+", p, 1) || !memcmp("-", p, 1) || !memcmp("*", p, 1) || !memcmp("/", p, 1) || !memcmp("(", p, 1) || !memcmp(")", p, 1)) {
+      char *token_string = calloc(1, 2);
+      strncpy(token_string, p++, 1);
+      cur = new_token(TOKEN_RESERVED, cur, token_string);
       continue;
     }
 
     if(isdigit(*p)) {
       cur = new_token(TOKEN_NUMBER, cur, p);
-      cur->val = strtol(p, &p, 10);
+      cur->value = strtol(p, &p, 10);
       continue;
     }
     error_at(p, "cannot tokenize");
@@ -219,7 +223,7 @@ Token *tokenize() {
 
 void generate(Node *node) {
   if (node->kind == NODE_NUMBER) {
-    printf("  push %d\n", node->val);
+    printf("  push %d\n", node->value);
     return;
   }
 
