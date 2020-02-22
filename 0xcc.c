@@ -307,8 +307,6 @@ void generate(Node *node) {
     break;
 
   case NODE_EQUALS:
-    printf("  pop rdi\n");
-    printf("  pop rax\n");
     printf("  cmp rax, rdi\n");
     printf("  sete al\n");
     printf("  movzb rax, al\n");
