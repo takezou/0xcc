@@ -13,10 +13,10 @@ typedef enum {
   NODE_DIVISION, // /
   NODE_EQUALS, // ==
   NODE_NOT_EQUALS, // !=
-  NODE_SMALLER_THAN, // <
-  NODE_SMALLER_THAN_OR_EQUAL_TO, // <=
-  NODE_LARGER_THAN, // >
-  NODE_LARGER_THAN_OR_EQUAL_TO, // >=
+  NODE_LESS_THAN, // <
+  NODE_LESS_THAN_OR_EQUAL_TO, // <=
+  NODE_GREATER_THAN, // >
+  NODE_GREATER_THAN_OR_EQUAL_TO, // >=
   NODE_NUMBER, // number
 } NodeKind;
 
@@ -187,16 +187,16 @@ Node *relational() {
   Node *node = addition_or_subtraction();
 
   if (consume("<")) {
-    node = new_node(NODE_SMALLER_THAN, node, addition_or_subtraction());
+    node = new_node(NODE_LESS_THAN, node, addition_or_subtraction());
   }
   else if (consume("<=")) {
-    node = new_node(NODE_SMALLER_THAN_OR_EQUAL_TO, node, addition_or_subtraction());    
+    node = new_node(NODE_LESS_THAN_OR_EQUAL_TO, node, addition_or_subtraction());    
   }
   else if (consume(">")) {
-    node = new_node(NODE_LARGER_THAN, node, addition_or_subtraction());
+    node = new_node(NODE_GREATER_THAN, node, addition_or_subtraction());
   }
   else if (consume(">=")) {
-    node = new_node(NODE_LARGER_THAN_OR_EQUAL_TO, node, addition_or_subtraction());
+    node = new_node(NODE_GREATER_THAN_OR_EQUAL_TO, node, addition_or_subtraction());
   }
   return node;
 }
@@ -251,14 +251,14 @@ Token *tokenize() {
       p++;
       continue;
     }
-    if(!memcmp("==", p, 2)){
+    if(!memcmp("==", p, 2) || !memcmp("!=", p, 2) || !memcmp("<=", p, 2) || !memcmp(">=", p, 2)){
       char *token_string = calloc(3, sizeof(char));
       strncpy(token_string, p, 2);
       p+=2;
       cur = new_token(TOKEN_RESERVED, cur, token_string);
       continue;
     }
-    if(!memcmp("+", p, 1) || !memcmp("-", p, 1) || !memcmp("*", p, 1) || !memcmp("/", p, 1) || !memcmp("(", p, 1) || !memcmp(")", p, 1)) {
+    if(!memcmp("+", p, 1) || !memcmp("-", p, 1) || !memcmp("*", p, 1) || !memcmp("/", p, 1) || !memcmp("(", p, 1) || !memcmp(")", p, 1)  || !memcmp("<", p, 1) || !memcmp(">", p, 1)) {
       char *token_string = calloc(2, sizeof(char));
       strncpy(token_string, p++, 1);
       cur = new_token(TOKEN_RESERVED, cur, token_string);
@@ -309,6 +309,36 @@ void generate(Node *node) {
   case NODE_EQUALS:
     printf("  cmp rax, rdi\n");
     printf("  sete al\n");
+    printf("  movzb rax, al\n");
+    break;
+
+  case NODE_NOT_EQUALS:
+    printf("  cmp rax, rdi\n");
+    printf("  setne al\n");
+    printf("  movzb rax, al\n");
+    break;
+
+  case NODE_LESS_THAN:
+    printf("  cmp rax, rdi\n");
+    printf("  setl al\n");
+    printf("  movzb rax, al\n");
+    break;
+    
+  case NODE_LESS_THAN_OR_EQUAL_TO:
+    printf("  cmp rax, rdi\n");
+    printf("  setle al\n");
+    printf("  movzb rax, al\n");
+    break;
+
+  case NODE_GREATER_THAN:
+    printf("  cmp rax, rdi\n");
+    printf("  setg al\n");
+    printf("  movzb rax, al\n");
+    break;
+
+  case NODE_GREATER_THAN_OR_EQUAL_TO:
+    printf("  cmp rax, rdi\n");
+    printf("  setge al\n");
     printf("  movzb rax, al\n");
     break;
   }
