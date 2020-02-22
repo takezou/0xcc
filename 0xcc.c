@@ -11,6 +11,12 @@ typedef enum {
   NODE_SUBTRACTION, // -
   NODE_MULTIPLICATION, // *
   NODE_DIVISION, // /
+  NODE_EQUALS, // ==
+  NODE_NOT_EQUALS, // !=
+  NODE_SMALLER_THAN, // <
+  NODE_SMALLER_THAN_OR_EQUAL_TO, // <=
+  NODE_LARGER_THAN, // >
+  NODE_LARGER_THAN_OR_EQUAL_TO, // >=
   NODE_NUMBER, // number
 } NodeKind;
 
@@ -53,6 +59,9 @@ Node *primary();
 Node *multiplication_or_division();
 Node *expression();
 Node *unary();
+Node *equality();
+Node *relational();
+Node *addition_or_subtraction();
 
 // report error and its location
 void error_at(char *loc, char *fmt, ...) {
@@ -154,6 +163,47 @@ Node *multiplication_or_division() {
 }
 
 Node *expression() {
+  Node *node = equality();
+  return node;
+}
+
+Node *equality() {
+  Node *node = relational();
+
+  while(true) {
+    if (consume("==")) {
+      node = new_node(NODE_EQUALS, node, relational());
+    }
+    else if (consume("!=")) {
+      node = new_node(NODE_NOT_EQUALS, node, relational());
+    }
+    else {
+      return node;
+    }
+  }
+}
+
+Node *relational() {
+  Node *node = addition_or_subtraction();
+
+  if (consume("<")) {
+    node = new_node(NODE_SMALLER_THAN, node, addition_or_subtraction());
+  }
+  else if (consume("<=")) {
+    node = new_node(NODE_SMALLER_THAN_OR_EQUAL_TO, node, addition_or_subtraction());    
+  }
+  else if (consume(">")) {
+    node = new_node(NODE_LARGER_THAN, node, addition_or_subtraction());
+  }
+  else if (consume(">=")) {
+    node = new_node(NODE_LARGER_THAN_OR_EQUAL_TO, node, addition_or_subtraction());
+  }
+  return node;
+}
+
+/* */
+
+Node *addition_or_subtraction() {
   Node *node = multiplication_or_division();
 
   while (true) {
@@ -201,14 +251,19 @@ Token *tokenize() {
       p++;
       continue;
     }
-
+    if(!memcmp("==", p, 2)){
+      char *token_string = calloc(3, sizeof(char));
+      strncpy(token_string, p, 2);
+      p+=2;
+      cur = new_token(TOKEN_RESERVED, cur, token_string);
+      continue;
+    }
     if(!memcmp("+", p, 1) || !memcmp("-", p, 1) || !memcmp("*", p, 1) || !memcmp("/", p, 1) || !memcmp("(", p, 1) || !memcmp(")", p, 1)) {
       char *token_string = calloc(2, sizeof(char));
       strncpy(token_string, p++, 1);
       cur = new_token(TOKEN_RESERVED, cur, token_string);
       continue;
     }
-
     if(isdigit(*p)) {
       cur = new_token(TOKEN_NUMBER, cur, p);
       cur->value = strtol(p, &p, 10);
@@ -249,6 +304,14 @@ void generate(Node *node) {
   case NODE_DIVISION:
     printf("  cqo\n");
     printf("  idiv rdi\n");
+    break;
+
+  case NODE_EQUALS:
+    printf("  pop rdi\n");
+    printf("  pop rax\n");
+    printf("  cmp rax, rdi\n");
+    printf("  sete al\n");
+    printf("  movzb rax, al\n");
     break;
   }
 
