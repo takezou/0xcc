@@ -25,11 +25,19 @@ void error(char *fmt, ...) {
 }
 
 bool consume(char *operator) {
-  if(token->kind != TOKEN_RESERVED || strlen(operator) != token->length || memcmp(token->string, operator, token->length)) {
+  if (token->kind != TOKEN_RESERVED || strlen(operator) != token->length || memcmp(token->string, operator, token->length)) {
     return false;
   }
   token = token->next;
   return true;
+}
+
+Token *consume_identifier() {
+  if (token->kind != TOKEN_IDENTIFIER) {
+    return false;
+  }
+  token = token->next;
+  return token;
 }
 
 // if next token is an expected one, read 1 more token ahead and return true

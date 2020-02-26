@@ -8,6 +8,15 @@ Node *primary() {
     return node;
   }
 
+  // local variable
+  Token *token = consume_identifier();
+  if (token) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = NODE_LOCAL_VARIABLE;
+    node->offset = (token->string[0] - 'a' + 1) * 8;
+    return node;
+  }
+
   // it should be a number otherwise
   return new_node_num(expect_number());
 }
@@ -29,8 +38,21 @@ Node *multiplication_or_division() {
 }
 
 Node *expression() {
-  Node *node = equality();
+  return assignment();
+}
+
+Node *statement() {
+  Node *node = expression();
+  expect(";");
   return node;
+}
+
+void program() {
+  int i = 0;
+  while (!at_eof()) {
+    code[i++] = statement();
+  }
+  code[i] = NULL;
 }
 
 Node *equality() {
@@ -92,6 +114,15 @@ Node *unary() {
   }
   return primary();
 }
+
+Node *assignment() {
+  Node *node = equality();
+  if (consume("=")) {
+    node = new_node(NODE_ASSIGNMENT, node, assignment());
+  }
+  return node;
+}
+
 //create a new token and append it to cur
 Token *new_token(TokenKind kind, Token *cur, char *string) {
   Token *token = calloc(1, sizeof(Token));
@@ -107,35 +138,40 @@ Token *tokenize() {
   char *p = user_input;
   Token head;
   head.next = NULL;
-  Token *cur = &head;
+  Token *current_token = &head;
 
-  while(*p) {
+  while (*p) {
     // skip whitespaces
-    if(isspace(*p)) {
+    if (isspace(*p)) {
       p++;
       continue;
     }
-    if(!memcmp("==", p, 2) || !memcmp("!=", p, 2) || !memcmp("<=", p, 2) || !memcmp(">=", p, 2)){
+    if (!memcmp("==", p, 2) || !memcmp("!=", p, 2) || !memcmp("<=", p, 2) || !memcmp(">=", p, 2)){
       char *token_string = calloc(3, sizeof(char));
       strncpy(token_string, p, 2);
       p+=2;
-      cur = new_token(TOKEN_RESERVED, cur, token_string);
+      current_token = new_token(TOKEN_RESERVED, current_token, token_string);
       continue;
     }
-    if(!memcmp("+", p, 1) || !memcmp("-", p, 1) || !memcmp("*", p, 1) || !memcmp("/", p, 1) || !memcmp("(", p, 1) || !memcmp(")", p, 1)  || !memcmp("<", p, 1) || !memcmp(">", p, 1)) {
+    if ('a' <= *p && *p <= 'z') {
+      current_token = new_token(TOKEN_IDENTIFIER, current_token, p++);
+      //current_token->length = 1;
+      continue;
+    }
+    if (!memcmp("+", p, 1) || !memcmp("-", p, 1) || !memcmp("*", p, 1) || !memcmp("/", p, 1) || !memcmp("(", p, 1) || !memcmp(")", p, 1)  || !memcmp("<", p, 1) || !memcmp(">", p, 1) || !memcmp("=", p, 1) || !memcmp(";", p, 1)) {
       char *token_string = calloc(2, sizeof(char));
       strncpy(token_string, p++, 1);
-      cur = new_token(TOKEN_RESERVED, cur, token_string);
+      current_token = new_token(TOKEN_RESERVED, current_token, token_string);
       continue;
     }
     if(isdigit(*p)) {
-      cur = new_token(TOKEN_NUMBER, cur, p);
-      cur->value = strtol(p, &p, 10);
+      current_token = new_token(TOKEN_NUMBER, current_token, p);
+      current_token->value = strtol(p, &p, 10);
       continue;
     }
     error_at(p, "cannot tokenize");
   }
 
-  new_token(TOKEN_EOF, cur, p);
+  new_token(TOKEN_EOF, current_token, p);
   return head.next;
 }
