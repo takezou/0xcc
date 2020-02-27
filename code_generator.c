@@ -5,7 +5,7 @@ void generate_local_variable(Node *node) {
     error("Left value of the assignment is not a local variable.");
   }
   printf("  mov rax, rbp\n");
-  printf("  sub rax, %d\n");
+  printf("  sub rax, %d\n", node->offset);
   printf("  push rax\n");
 }
 

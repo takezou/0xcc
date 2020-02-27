@@ -43,4 +43,12 @@ try 0 '10000<1;'
 
 try 1 '1;'
 try 5 'a=5;'
+try 128 'z=1024/8;'
+try '3' 'b=-(5-8);'
+try '96' 'b=(5-8)*32*-1;'
+#fails: try '1' 'a=1;a;'
+#fails: try '2' 'a=1;a+a;'
+#fails: try '1' 'a=-1;a*a;'
+#fails: try '1' 'a=-1;b=a*a;'
+#fails: try 86 'a=10;b=(5-8)*32;c=-(a+b);'
 echo OK
