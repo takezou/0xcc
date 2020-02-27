@@ -36,8 +36,9 @@ Token *consume_identifier() {
   if (token->kind != TOKEN_IDENTIFIER) {
     return false;
   }
+  Token *current_token = token;
   token = token->next;
-  return token;
+  return current_token;
 }
 
 // if next token is an expected one, read 1 more token ahead and return true
