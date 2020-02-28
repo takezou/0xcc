@@ -146,16 +146,28 @@ Token *tokenize() {
       p++;
       continue;
     }
-    if (!memcmp("==", p, 2) || !memcmp("!=", p, 2) || !memcmp("<=", p, 2) || !memcmp(">=", p, 2)){
+    if (!memcmp("==", p, 2) || !memcmp("!=", p, 2) || !memcmp("<=", p, 2) || !memcmp(">=", p, 2)) {
       char *token_string = calloc(3, sizeof(char));
       strncpy(token_string, p, 2);
       p+=2;
       current_token = new_token(TOKEN_RESERVED, current_token, token_string);
       continue;
     }
+    // TODO: rewrite this to accomodate variable names with 1 or more characters
+    // strspn maybe useful
+    // -> c string functions https://en.wikibooks.org/wiki/C_Programming/String_manipulation#The_strcspn,_strpbrk,_and_strspn_functions
+    
     if ('a' <= *p && *p <= 'z') {
+      /*
       current_token = new_token(TOKEN_IDENTIFIER, current_token, p++);
       //current_token->length = 1;
+      */
+      // # TODO: fix this part
+      int name_length = strspn(p, "abcdefghijklmnopqrstuvwxyz");
+      char *variable_name = calloc(name_length + 1, sizeof(char));
+      strncpy(variable_name, p, name_length);
+      current_token = new_token(TOKEN_IDENTIFIER, current_token, variable_name);
+      p += name_length;
       continue;
     }
     if (!memcmp("+", p, 1) || !memcmp("-", p, 1) || !memcmp("*", p, 1) || !memcmp("/", p, 1) || !memcmp("(", p, 1) || !memcmp(")", p, 1)  || !memcmp("<", p, 1) || !memcmp(">", p, 1) || !memcmp("=", p, 1) || !memcmp(";", p, 1)) {

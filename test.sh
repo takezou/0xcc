@@ -51,4 +51,6 @@ try '2' 'a=1;a+a;'
 try '1' 'a=-1;a*a;'
 try '1' 'a=-1;b=a*a;'
 try 86 'a=10;b=(5-8)*32;c=-(a+b);'
+try '3' 'abc=3;'
+try '255' 'abc=128;zyx=abc*2;result=zyx-1;'
 echo OK
