@@ -124,12 +124,12 @@ Node *assignment() {
 }
 
 //create a new token and append it to cur
-Token *new_token(TokenKind kind, Token *cur, char *string) {
+Token *new_token(TokenKind kind, Token *current_token, char *string) {
   Token *token = calloc(1, sizeof(Token));
   token->kind = kind;
   token->string = string;
   token->length = strlen(string);
-  cur->next = token;
+  current_token->next = token;
   return token;
 }
 
@@ -153,16 +153,7 @@ Token *tokenize() {
       current_token = new_token(TOKEN_RESERVED, current_token, token_string);
       continue;
     }
-    // TODO: rewrite this to accomodate variable names with 1 or more characters
-    // strspn maybe useful
-    // -> c string functions https://en.wikibooks.org/wiki/C_Programming/String_manipulation#The_strcspn,_strpbrk,_and_strspn_functions
-    
     if ('a' <= *p && *p <= 'z') {
-      /*
-      current_token = new_token(TOKEN_IDENTIFIER, current_token, p++);
-      //current_token->length = 1;
-      */
-      // # TODO: fix this part
       int name_length = strspn(p, "abcdefghijklmnopqrstuvwxyz");
       char *variable_name = calloc(name_length + 1, sizeof(char));
       strncpy(variable_name, p, name_length);

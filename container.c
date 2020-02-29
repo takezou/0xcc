@@ -1,25 +1,25 @@
 #include "0xcc.h"
 
 // report error and its location
-void error_at(char *loc, char *fmt, ...) {
+void error_at(char *location, char *format, ...) {
   va_list ap;
-  va_start(ap, fmt);
+  va_start(ap, format);
 
-  int pos = loc - user_input;
+  int position = location - user_input;
   fprintf(stderr, "%s\n", user_input);
-  fprintf(stderr, "%*s", pos, " "); // print space with pos length
+  fprintf(stderr, "%*s", position, " "); // print space with pos length
   fprintf(stderr, "^ ");
-  vfprintf(stderr, fmt, ap);
+  vfprintf(stderr, format, ap);
   fprintf(stderr, "\n");
   exit(1);
 }
 
 // function for error reporting
 // takes same arguments as printf
-void error(char *fmt, ...) {
+void error(char *format, ...) {
   va_list ap;
-  va_start(ap, fmt);
-  vfprintf(stderr, fmt, ap);
+  va_start(ap, format);
+  vfprintf(stderr, format, ap);
   fprintf(stderr, "\n");
   exit(1);
 }

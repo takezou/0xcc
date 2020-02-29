@@ -69,8 +69,8 @@ Node *assignment();
 Node *statement();
 void program();
 
-void error_at(char *loc, char *fmt, ...);
-void error(char *fmt, ...);
+void error_at(char *location, char *format, ...);
+void error(char *format, ...);
 bool consume(char *operator);
 Token *consume_identifier();
 void expect(char *operator);
@@ -82,7 +82,7 @@ Node *new_node_num(int value);
 
 Node *code[100];
 
-Token *new_token(TokenKind kind, Token *cur, char *string);
+Token *new_token(TokenKind kind, Token *current_token, char *string);
 Token *tokenize();
 
 void generate(Node *node);
