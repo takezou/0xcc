@@ -52,12 +52,26 @@ struct Token {
   int length; // token length
 };
 
+typedef struct LocalVariable LocalVariable;
+
+// type for local variables
+struct LocalVariable {
+  LocalVariable *next; // points next variable or NULL
+  char *name; // variable name
+  int length; // name length
+  int offset; // offset from RBP
+};
+
+// Local Variable
+LocalVariable *locals;
+
 // token currently looked at
 Token *token;
 
 // input
 char *user_input;
 
+LocalVariable *find_local_variable(Token *token);
 Node *primary();
 Node *multiplication_or_division();
 Node *expression();

@@ -1,5 +1,14 @@
 #include "0xcc.h"
 
+LocalVariable *find_local_variable(Token *token) {
+  for (LocalVariable *variable = locals; variable != NULL; variable = variable->next) {
+    if (variable->length == token->length && !memcmp(token->string, variable->name, variable->length)) {
+      return variable;
+    }
+  }
+  return NULL;
+}
+
 Node *primary() {
   // if the next token is "(", it should be "(" expr ")"
   if (consume("(")) {
@@ -13,7 +22,19 @@ Node *primary() {
   if (token) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = NODE_LOCAL_VARIABLE;
-    node->offset = (token->string[0] - 'a' + 1) * 8;
+
+    LocalVariable *local_variable = find_local_variable(token);
+    if (local_variable != NULL) {
+      node->offset = local_variable->offset;
+    } else {
+      local_variable = calloc(1, sizeof(LocalVariable));
+      local_variable->next = locals;
+      local_variable->name = token->string;
+      local_variable->length = token->length;
+      local_variable->offset += 8 + (locals != NULL ? locals->offset : 0);
+      node->offset = local_variable->offset;
+      locals = local_variable;
+    }
     return node;
   }
 
@@ -149,7 +170,7 @@ Token *tokenize() {
     if (!memcmp("==", p, 2) || !memcmp("!=", p, 2) || !memcmp("<=", p, 2) || !memcmp(">=", p, 2)) {
       char *token_string = calloc(3, sizeof(char));
       strncpy(token_string, p, 2);
-      p+=2;
+      p += 2;
       current_token = new_token(TOKEN_RESERVED, current_token, token_string);
       continue;
     }
