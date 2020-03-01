@@ -58,4 +58,7 @@ try '255' 'abc=128;zyx=abc*2;result=zyx-1;'
 # this failes before node->offset is implemented properly to accomodate variable names longer than 1
 try '5' 'va=5;vb=10;va;'
 
+try '123' '_p=120+3;'
+try '222' '_X=111;_Y=2;RESULT_VALUE=_X*_Y;'
+
 echo OK

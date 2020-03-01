@@ -38,6 +38,7 @@ typedef enum {
   TOKEN_RESERVED, // symbol token
   TOKEN_IDENTIFIER, // identifier token
   TOKEN_NUMBER, // integer token
+  TOKEN_RETURN, // return keyword token
   TOKEN_EOF // token to designate end of input
 } TokenKind;
 

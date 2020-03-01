@@ -154,6 +154,10 @@ Token *new_token(TokenKind kind, Token *current_token, char *string) {
   return token;
 }
 
+int is_token_character(char c) {
+  return (isalpha(c) || isdigit(c) || c == '_');
+}
+
 // tokenize input string p and return it
 Token *tokenize() {
   char *p = user_input;
@@ -174,8 +178,8 @@ Token *tokenize() {
       current_token = new_token(TOKEN_RESERVED, current_token, token_string);
       continue;
     }
-    if ('a' <= *p && *p <= 'z') {
-      int name_length = strspn(p, "abcdefghijklmnopqrstuvwxyz");
+    if (isalpha(*p) || *p == '_') {
+      int name_length = 1 + strspn(p + 1, "_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
       char *variable_name = calloc(name_length + 1, sizeof(char));
       strncpy(variable_name, p, name_length);
       current_token = new_token(TOKEN_IDENTIFIER, current_token, variable_name);
