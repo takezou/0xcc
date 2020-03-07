@@ -10,6 +10,7 @@ void generate_local_variable(Node *node) {
 }
 
 void generate(Node *node) {
+  if(!node) return;
   switch (node->kind) {
   case NODE_NUMBER:
     printf("  push %d\n", node->value);
@@ -92,6 +93,14 @@ void generate(Node *node) {
     printf("  setge al\n");
     printf("  movzb rax, al\n");
     break;
+
+  case NODE_RETURN:
+    generate(node->lhs);
+    printf("  pop rax\n");
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
+    printf("  ret\n");
+    return;
   }
 
   printf("  push rax\n");

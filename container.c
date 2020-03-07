@@ -32,10 +32,20 @@ bool consume(char *operator) {
   return true;
 }
 
+Token *consume_keyword(TokenKind kind) {
+  if (token->kind != TOKEN_RETURN || memcmp(token->string, "return", token->length)) {
+    return NULL;
+  }
+  Token *current_token = token;
+  token = token->next;
+  return current_token;
+}
+
 Token *consume_identifier() {
   if (token->kind != TOKEN_IDENTIFIER) {
-    return false;
+    return NULL;
   }
+
   Token *current_token = token;
   token = token->next;
   return current_token;

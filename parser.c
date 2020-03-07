@@ -37,7 +37,6 @@ Node *primary() {
     }
     return node;
   }
-
   // it should be a number otherwise
   return new_node_num(expect_number());
 }
@@ -63,8 +62,20 @@ Node *expression() {
 }
 
 Node *statement() {
-  Node *node = expression();
-  expect(";");
+  Node *node;
+
+  if (consume_keyword(TOKEN_RETURN) != NULL) {
+    node = calloc(1, sizeof(Node));
+    node->kind = NODE_RETURN;
+    node->lhs = expression();
+  }
+  else {
+    node = expression();
+  }
+
+  if (! consume(";")) {
+    error_at(token->string, "Token other than ';' found here.");
+  }
   return node;
 }
 
@@ -149,7 +160,6 @@ Token *new_token(TokenKind kind, Token *current_token, char *string) {
   Token *token = calloc(1, sizeof(Token));
   token->kind = kind;
   token->string = string;
-  token->length = strlen(string);
   current_token->next = token;
   return token;
 }
@@ -172,28 +182,33 @@ Token *tokenize() {
       continue;
     }
     if (!memcmp("==", p, 2) || !memcmp("!=", p, 2) || !memcmp("<=", p, 2) || !memcmp(">=", p, 2)) {
-      char *token_string = calloc(3, sizeof(char));
-      strncpy(token_string, p, 2);
+      current_token = new_token(TOKEN_RESERVED, current_token, p);
+      current_token->length = 2;
       p += 2;
-      current_token = new_token(TOKEN_RESERVED, current_token, token_string);
+      continue;
+    }
+    if (strncmp(p, "return", 6) == 0 && is_token_character(p[6]) == 0) {
+      current_token = new_token(TOKEN_RETURN, current_token, p);
+      current_token->length = 6;
+      p += 6;
+
       continue;
     }
     if (isalpha(*p) || *p == '_') {
       int name_length = 1 + strspn(p + 1, "_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
-      char *variable_name = calloc(name_length + 1, sizeof(char));
-      strncpy(variable_name, p, name_length);
-      current_token = new_token(TOKEN_IDENTIFIER, current_token, variable_name);
+      current_token = new_token(TOKEN_IDENTIFIER, current_token, p);
+      current_token->length = name_length;
       p += name_length;
       continue;
     }
     if (!memcmp("+", p, 1) || !memcmp("-", p, 1) || !memcmp("*", p, 1) || !memcmp("/", p, 1) || !memcmp("(", p, 1) || !memcmp(")", p, 1)  || !memcmp("<", p, 1) || !memcmp(">", p, 1) || !memcmp("=", p, 1) || !memcmp(";", p, 1)) {
-      char *token_string = calloc(2, sizeof(char));
-      strncpy(token_string, p++, 1);
-      current_token = new_token(TOKEN_RESERVED, current_token, token_string);
+      current_token = new_token(TOKEN_RESERVED, current_token, p++);
+      current_token->length = 1;
       continue;
     }
     if(isdigit(*p)) {
       current_token = new_token(TOKEN_NUMBER, current_token, p);
+      char *current_pos = p;
       current_token->value = strtol(p, &p, 10);
       continue;
     }

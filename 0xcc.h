@@ -19,7 +19,8 @@ typedef enum {
   NODE_GREATER_THAN_OR_EQUAL_TO, // >=
   NODE_ASSIGNMENT, // =
   NODE_LOCAL_VARIABLE, // local variable
-  NODE_NUMBER, // number
+  NODE_RETURN, // return keyword
+  NODE_NUMBER // number
 } NodeKind;
 
 typedef struct Node Node;
@@ -88,6 +89,7 @@ void error_at(char *location, char *format, ...);
 void error(char *format, ...);
 bool consume(char *operator);
 Token *consume_identifier();
+Token *consume_keyword();
 void expect(char *operator);
 int expect_number();
 bool at_eof();
