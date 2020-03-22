@@ -32,11 +32,28 @@ void generate(Node *node) {
     printf("  mov [rax], rdi\n");
     printf("  push rdi\n");
     return;
+
+  case NODE_RETURN:
+    generate(node->lhs);
+    printf("  pop rax\n");
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
+    printf("  ret\n");
+    return;
+
+  case NODE_IF:
+    generate(node->lhs);
+    printf("  pop rax\n");
+    printf("  cmp rax, 0\n");
+    printf("  je  .LendXXX\n");
+    generate(node->rhs);
+    printf(".LendXXX:\n");
+    return;
   }
 
   generate(node->lhs);
   generate(node->rhs);
-
+  
   printf("  pop rdi\n");
   printf("  pop rax\n");
 
@@ -93,14 +110,6 @@ void generate(Node *node) {
     printf("  setge al\n");
     printf("  movzb rax, al\n");
     break;
-
-  case NODE_RETURN:
-    generate(node->lhs);
-    printf("  pop rax\n");
-    printf("  mov rsp, rbp\n");
-    printf("  pop rbp\n");
-    printf("  ret\n");
-    return;
   }
 
   printf("  push rax\n");

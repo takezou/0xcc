@@ -64,4 +64,7 @@ try '222' '_X=111;_Y=2;RESULT_VALUE=_X*_Y;'
 try '5' 'return 5;'
 try '222' '_X=111;_Y=2;RESULT_VALUE=_X*_Y;return RESULT_VALUE;'
 
+try '1' 'if(1==1) return 1;'
+try '2' 'if(1==1) 1; 2;'
+try '2' 'if(1!=1) return 1; 2;'
 echo OK

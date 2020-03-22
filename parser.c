@@ -69,6 +69,15 @@ Node *statement() {
     node->kind = NODE_RETURN;
     node->lhs = expression();
   }
+  else if (consume_keyword(TOKEN_IF) != NULL) {
+    expect("(");
+    node = calloc(1, sizeof(Node));
+    node->kind = NODE_IF;    
+    node->lhs = expression();
+    expect(")");
+    node->rhs = statement();
+    return node;
+  }
   else {
     node = expression();
   }
@@ -106,19 +115,22 @@ Node *equality() {
 Node *relational() {
   Node *node = addition_or_subtraction();
 
-  if (consume("<")) {
-    node = new_node(NODE_LESS_THAN, node, addition_or_subtraction());
+  while (true) {
+    if (consume("<")) {
+      node = new_node(NODE_LESS_THAN, node, addition_or_subtraction());
+    }
+    else if (consume("<=")) {
+      node = new_node(NODE_LESS_THAN_OR_EQUAL_TO, node, addition_or_subtraction());    
+    }
+    else if (consume(">")) {
+      node = new_node(NODE_GREATER_THAN, node, addition_or_subtraction());
+    }
+    else if (consume(">=")) {
+      node = new_node(NODE_GREATER_THAN_OR_EQUAL_TO, node, addition_or_subtraction());
+    } else {
+      return node;
+    }
   }
-  else if (consume("<=")) {
-    node = new_node(NODE_LESS_THAN_OR_EQUAL_TO, node, addition_or_subtraction());    
-  }
-  else if (consume(">")) {
-    node = new_node(NODE_GREATER_THAN, node, addition_or_subtraction());
-  }
-  else if (consume(">=")) {
-    node = new_node(NODE_GREATER_THAN_OR_EQUAL_TO, node, addition_or_subtraction());
-  }
-  return node;
 }
 
 Node *addition_or_subtraction() {
@@ -191,7 +203,12 @@ Token *tokenize() {
       current_token = new_token(TOKEN_RETURN, current_token, p);
       current_token->length = 6;
       p += 6;
-
+      continue;
+    }
+    if (strncmp(p, "if", 2) == 0 && is_token_character(p[2]) == 0) {
+      current_token = new_token(TOKEN_IF, current_token, p);
+      current_token->length = 2;
+      p += 2;
       continue;
     }
     if (isalpha(*p) || *p == '_') {

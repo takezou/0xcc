@@ -33,12 +33,25 @@ bool consume(char *operator) {
 }
 
 Token *consume_keyword(TokenKind kind) {
-  if (token->kind != TOKEN_RETURN || memcmp(token->string, "return", token->length)) {
-    return NULL;
+  if (kind == TOKEN_RETURN && !memcmp(token->string, "return", 6))
+    goto matched;
+  else if (kind == TOKEN_IF && !memcmp(token->string, "if", 2))
+    goto matched;
+  else if (kind == TOKEN_ELSE && !memcmp(token->string, "else", 4))
+    goto matched;
+  else if (kind == TOKEN_WHILE && !memcmp(token->string, "while", 5))
+    goto matched;
+  else if (kind == TOKEN_FOR && !memcmp(token->string, "for", 3))
+    goto matched;
+  
+  return NULL;
+  
+ matched:
+  {
+    Token *current_token = token;
+    token = token->next;
+    return current_token;
   }
-  Token *current_token = token;
-  token = token->next;
-  return current_token;
 }
 
 Token *consume_identifier() {

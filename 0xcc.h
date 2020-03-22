@@ -20,6 +20,10 @@ typedef enum {
   NODE_ASSIGNMENT, // =
   NODE_LOCAL_VARIABLE, // local variable
   NODE_RETURN, // return keyword
+  NODE_IF, // if keyword
+  NODE_ELSE, // else keyword
+  NODE_WHILE, // while keyword
+  NODE_FOR, // for keyword
   NODE_NUMBER // number
 } NodeKind;
 
@@ -40,6 +44,10 @@ typedef enum {
   TOKEN_IDENTIFIER, // identifier token
   TOKEN_NUMBER, // integer token
   TOKEN_RETURN, // return keyword token
+  TOKEN_IF, // if keyword token
+  TOKEN_ELSE, // else keyword token
+  TOKEN_WHILE, // while keyword token
+  TOKEN_FOR, // for keyword token
   TOKEN_EOF // token to designate end of input
 } TokenKind;
 
