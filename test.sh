@@ -67,4 +67,6 @@ try '222' '_X=111;_Y=2;RESULT_VALUE=_X*_Y;return RESULT_VALUE;'
 try '1' 'if(1==1) return 1;'
 try '2' 'if(1==1) 1; 2;'
 try '2' 'if(1!=1) return 1; 2;'
+try '2' 'if(1!=1) return 1; else 2;'
+try '7' 'var1=10;var2=3;if(var1<var2) return 100; else return var1 - var2;'
 echo OK

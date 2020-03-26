@@ -42,16 +42,31 @@ void generate(Node *node) {
     return;
 
   case NODE_IF:
-    generate(node->lhs);
-    printf("  pop rax\n");
-    printf("  cmp rax, 0\n");
-    printf("  je  .LendXXX\n");
-    generate(node->rhs);
-    printf(".LendXXX:\n");
+    if (node->rhs && node->rhs->lhs && node->rhs->lhs->kind == NODE_ELSE) {
+      generate(node->lhs);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      printf("  je  .LelseXXX\n");
+      generate(node->rhs);
+      printf("  jmp .LendXXX\n");
+      printf(".LelseXXX:\n");
+      //generate(node->rhs);
+      generate(node->rhs->lhs->lhs);
+      printf(".LendXXX:\n");
+    } else {
+      generate(node->lhs);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      printf("  je  .LendXXX\n");
+      generate(node->rhs);
+      printf(".LendXXX:\n");
+    }
     return;
   }
-
+  
+  //if (node->kind != NODE_ELSE) {
   generate(node->lhs);
+  //}
   generate(node->rhs);
   
   printf("  pop rdi\n");

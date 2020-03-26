@@ -76,6 +76,13 @@ Node *statement() {
     node->lhs = expression();
     expect(")");
     node->rhs = statement();
+    if (consume_keyword(TOKEN_ELSE) != NULL) {
+      Node *else_node;
+      else_node = calloc(1, sizeof(Node));
+      else_node->kind = NODE_ELSE;
+      else_node->lhs = statement();
+      node->rhs->lhs = else_node;
+    }
     return node;
   }
   else {
